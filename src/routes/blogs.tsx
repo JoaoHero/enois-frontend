@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { texts } from "@/texts";
-import { BookOpen, PenLine, Plus } from "lucide-react";
+import { BookOpen, PenLine, Plus, Search } from "lucide-react";
 
 import { blogsApi } from "@/lib/api/blogs";
 import { requireAuth } from "@/lib/require-auth";
@@ -13,6 +13,7 @@ import { useIsAuthenticated } from "@/lib/use-auth";
 
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import { LoadingState } from "@/components/ui/loading-state";
 import { PageHeader } from "@/components/ui/page-header";
 
@@ -40,6 +41,7 @@ export const Route = createFileRoute("/blogs")({
  */
 function Blogs() {
   const [editorOpen, setEditorOpen] = useState(false);
+  const [query, setQuery] = useState("");
   const authenticated = useIsAuthenticated();
 
   const { data: mine } = useQuery({
@@ -49,8 +51,8 @@ function Blogs() {
   });
 
   const { data: directory = [], isLoading } = useQuery({
-    queryKey: ["blogs"],
-    queryFn: () => blogsApi.directory(),
+    queryKey: ["blogs", query],
+    queryFn: () => blogsApi.directory(50, query.trim() || undefined),
   });
 
   return (
@@ -108,13 +110,27 @@ function Blogs() {
           </Link>
         )}
 
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <Input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={texts.blog.searchPlaceholder}
+            aria-label={texts.blog.searchPlaceholder}
+            className="pl-9"
+          />
+        </div>
+
         {isLoading ? (
           <LoadingState />
         ) : directory.length === 0 ? (
           <EmptyState
             icon={BookOpen}
             title={texts.blog.title}
-            description={texts.blog.emptyDirectory}
+            description={query.trim() ? texts.blog.searchEmpty : texts.blog.emptyDirectory}
           />
         ) : (
           <div className="grid gap-4 sm:grid-cols-2">
