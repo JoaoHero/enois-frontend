@@ -1,12 +1,4 @@
-import {
-  type ChangeEvent,
-  type FormEvent,
-  Fragment,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { type ChangeEvent, type FormEvent, useCallback, useEffect, useRef, useState } from "react";
 
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
@@ -25,7 +17,6 @@ import type { HomeTab } from "@/types/routes/feed/home-tab";
 import type { MediaItem } from "@/types/routes/feed/media-item";
 import {
   ApoieCard,
-  CaughtUpDivider,
   PostCardSkeletons,
   QuestionComposerHint,
   type QuestionStatus,
@@ -34,7 +25,6 @@ import {
   StyledName,
   UserAvatar,
 } from "@rede-enois/design-system/domain";
-import { InfiniteScroll } from "@rede-enois/design-system/patterns";
 import {
   Button,
   EmptyState,
@@ -83,13 +73,13 @@ import { cn } from "@/lib/utils";
 import { AppContainer } from "@/components/app-container";
 import { SaciDuelBanner } from "@/components/events/saci-duel-banner";
 import { SaciSpot } from "@/components/events/saci-spot";
+import { VirtualizedFeedList } from "@/components/feed/virtualized-feed-list";
 import { TodayGamesCard } from "@/components/games/today-games-card";
 import { HtmlEditor } from "@/components/html-editor";
 import { LinkedInSyncPrompt } from "@/components/linkedin-sync-prompt";
 import { MentionTextarea } from "@/components/mention-textarea";
 import { NightRestReminder } from "@/components/night-rest-reminder";
 import { PlatformSpacesCard } from "@/components/platform-spaces-card";
-import { PostCard } from "@/components/post-card";
 import { ProfilePeek } from "@/components/profile/profile-peek";
 
 /** Abas válidas da tela inicial (a URL carrega a escolhida). */
@@ -1216,7 +1206,7 @@ function Home() {
             <QuestionStatusFilter value={questionStatus} onChange={setQuestionStatus} />
           )}
 
-          <div className="space-y-4">
+          <div>
             {feedLoading && <PostCardSkeletons />}
 
             {!feedLoading && feedFetching && !isFetchingNextPage && (
@@ -1227,30 +1217,21 @@ function Home() {
               </div>
             )}
 
-            {!feedLoading &&
-              feedPosts.map((p, index) => (
-                <Fragment key={p.id}>
-                  {index === caughtUpAt && <CaughtUpDivider />}
-
-                  {index === 0 ? (
-                    <div ref={firstPostRef}>
-                      <PostCard post={p} feedTab={tab} />
-                    </div>
-                  ) : (
-                    <PostCard post={p} feedTab={tab} />
-                  )}
-                </Fragment>
-              ))}
+            {!feedLoading && feedPosts.length > 0 && (
+              <VirtualizedFeedList
+                posts={feedPosts}
+                feedTab={tab}
+                caughtUpAt={caughtUpAt}
+                firstPostRef={firstPostRef}
+                hasMore={Boolean(hasNextPage)}
+                loadingMore={isFetchingNextPage}
+                onLoadMore={loadNextPage}
+                loadingLabel={texts.feed.loadingMore}
+                endLabel={texts.feed.endOfFeed}
+              />
+            )}
 
             {!feedLoading && feedPosts.length === 0 && <EmptyState title={texts.feed.empty} />}
-
-            <InfiniteScroll
-              hasMore={Boolean(hasNextPage)}
-              loading={isFetchingNextPage}
-              onLoadMore={loadNextPage}
-              loadingLabel={texts.feed.loadingMore}
-              endLabel={feedPosts.length > 0 ? texts.feed.endOfFeed : undefined}
-            />
           </div>
         </div>
 
