@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 
-import { QueryClientProvider } from "@tanstack/react-query";
 import {
   type ErrorComponentProps,
   HeadContent,
@@ -42,38 +41,32 @@ import appCss from "../styles.css?url";
 
 /**
  * 404 dentro da casca do app (cabeçalho e menu), e não numa página solta: quem caiu num link
- * quebrado continua com a navegação à mão. O provider vem junto porque o notFound da raiz
- * substitui o RootComponent inteiro — e a casca logada usa react-query.
+ * quebrado continua com a navegação à mão. The design system provider comes along because the root
+ * notFound replaces the whole RootComponent; react-query comes from the router `Wrap`.
  */
 function NotFoundComponent() {
-  const { queryClient } = Route.useRouteContext();
-
   return (
-    <QueryClientProvider client={queryClient}>
-      <DesignSystemProvider>
-        <AppContainer>
-          <div className="flex min-h-[60vh] items-center justify-center px-4">
-            <div className="max-w-md text-center">
-              <p className="text-7xl font-bold text-primary">{texts.root.notFound.code}</p>
+    <DesignSystemProvider>
+      <AppContainer>
+        <div className="flex min-h-[60vh] items-center justify-center px-4">
+          <div className="max-w-md text-center">
+            <p className="text-7xl font-bold text-primary">{texts.root.notFound.code}</p>
 
-              <h1 className="mt-4 text-xl font-semibold text-foreground">
-                {texts.root.notFound.title}
-              </h1>
+            <h1 className="mt-4 text-xl font-semibold text-foreground">
+              {texts.root.notFound.title}
+            </h1>
 
-              <p className="mt-2 text-sm text-muted-foreground">
-                {texts.root.notFound.description}
-              </p>
+            <p className="mt-2 text-sm text-muted-foreground">{texts.root.notFound.description}</p>
 
-              <div className="mt-6">
-                <Link to="/" className={buttonVariants({ size: "lg" })}>
-                  {texts.root.notFound.home}
-                </Link>
-              </div>
+            <div className="mt-6">
+              <Link to="/" className={buttonVariants({ size: "lg" })}>
+                {texts.root.notFound.home}
+              </Link>
             </div>
           </div>
-        </AppContainer>
-      </DesignSystemProvider>
-    </QueryClientProvider>
+        </div>
+      </AppContainer>
+    </DesignSystemProvider>
   );
 }
 
@@ -207,17 +200,11 @@ function RootShell({ children }: WithRequiredChildren) {
 }
 
 function RootComponent() {
-  const { queryClient } = Route.useRouteContext();
-
-  // O provider precisa ENVOLVER quem usa react-query: useThemeSync tem um useQuery
-  // (tema da conta) e, fora daqui, derrubava o SSR de todas as paginas
-  // ("No QueryClient set" — o RootComponent roda FORA do proprio provider).
+  // react-query comes from the router `Wrap` (src/router.tsx), around every root component.
   return (
-    <QueryClientProvider client={queryClient}>
-      <DesignSystemProvider>
-        <RootInsideProvider />
-      </DesignSystemProvider>
-    </QueryClientProvider>
+    <DesignSystemProvider>
+      <RootInsideProvider />
+    </DesignSystemProvider>
   );
 }
 
