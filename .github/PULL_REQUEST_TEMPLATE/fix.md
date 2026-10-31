@@ -19,6 +19,7 @@
 - [ ] Descrevi acima como verifiquei ("roda" não é verificação)
 - [ ] Textos novos estão em `src/texts.ts`
 - [ ] Não há segredo nem chave no diff
+- [ ] AI tools helped write this change (check if yes; no tool name or attribution line needed)
 - [ ] Conferi no browser em desktop e mobile
 - [ ] Corrigi a causa, não só o sintoma
 - [ ] Conferi outros lugares que usam o mesmo código
