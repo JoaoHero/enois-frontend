@@ -4,6 +4,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { texts } from "@/texts";
+import { Button, EmptyState, Input, LoadingState } from "@rede-enois/design-system/ui";
 import { Code2, FolderKanban, Globe, Plus, Search } from "lucide-react";
 
 import { communityProjectsApi } from "@/lib/api";
@@ -13,12 +14,8 @@ import { ogMetas } from "@/lib/seo";
 import { useIsAuthenticated } from "@/lib/use-auth";
 import { useLiteMode } from "@/lib/use-lite-mode";
 
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { LoadingState } from "@/components/ui/loading-state";
-
 import { AppContainer } from "@/components/app-container";
+import { ProjectCover } from "@/components/projects/project-cover";
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
 
 export const Route = createFileRoute("/projetos/")({
@@ -140,14 +137,7 @@ function ProjectsCatalog() {
                     }}
                     className="surface-card block h-full overflow-hidden transition hover:border-primary/50"
                   >
-                    {project.cover ? (
-                      <img src={project.cover} alt="" className="h-36 w-full object-cover" />
-                    ) : (
-                      <div
-                        className="h-36 w-full"
-                        style={{ background: "var(--gradient-primary)" }}
-                      />
-                    )}
+                    <ProjectCover src={project.cover} className="h-36 w-full" />
 
                     <div className="space-y-2 p-4">
                       {project.category && (

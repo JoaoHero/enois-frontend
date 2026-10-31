@@ -46,20 +46,34 @@ Fornece:
 - **404** (`NotFoundComponent`) e **Error Boundary** (`ErrorComponent`)
 - **RootShell** - HTML shell com `<head>` e `<body>`
 
-### 5. Layout Principal (`src/components/app-shell.tsx`)
+### 5. Layout Principal (`src/components/authenticated-app-container.tsx`)
 
 Layout que envolve todas as páginas autenticadas:
 
 - **Header sticky** com logo, busca global, toggle de tema, notificações e avatar do perfil
-- **Sidebar de navegação** (desktop) com links para feed, rede, comunidades, mensagens, vagas, mentoria, eventos, salvos
-- **Navbar inferior** (mobile) com os mesmos links
+- **Sidebar de navegação** (desktop, ≥ 1024px) com links para feed, rede, comunidades, mensagens, vagas, mentoria, eventos, salvos
+- **Drawer lateral de navegação** (mobile/tablet, < 1024px) com os mesmos links
 - **Notificações** em popover com lista, marcação de lidas, e ação "Aceitar" para convites
+
+O limite da navegação é único: 1024px (`lg`). Abaixo dele o menu abre pelo hambúrguer (drawer); a partir dele, a sidebar fica visível.
 
 ### 6. Gerenciamento de Estado
 
 - **TanStack Query** para todo estado de servidor (cache, refetch, mutations)
 - **localStorage** para sessão (session_token, refresh_token, current_user)
 - **Estado local (useState)** para UI components (modais, abas, formulários)
+
+As consultas compartilhadas ficam em `src/lib/query-options/` por domínio. A chave inclui os
+parâmetros que alteram a resposta, como os limites de comunidades próprias e de convites da rede.
+Projetos pessoais de perfil e projetos comunitários têm identidades diferentes; operações de cache
+reutilizam as chaves ou os prefixos dessas definições. A carteira usa a mesma consulta no perfil e
+na página da carteira. A edição de empresa invalida o detalhe, as empresas próprias e os filtros do
+diretório. Consultas de perfil por ID compartilham a definição individual, inclusive nos diálogos.
+A consulta de aviso ativo converte a resposta sem conteúdo em `null`, um resultado válido para o
+TanStack Query.
+
+Condições de interface, polling e exceções de frescor continuam nos consumidores. Loaders de SSR,
+revalidação de dados associados à sessão e paginação por cursor conservam suas regras próprias.
 
 ### 7. Autenticação
 

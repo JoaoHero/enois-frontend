@@ -11,6 +11,25 @@ import type { GroupPost } from "@/types/application/group/group-post";
 import type { GroupView } from "@/types/application/group/group-view";
 import type { ReactionType } from "@/types/application/reaction/reaction-type";
 import {
+  ReactionPicker,
+  StyledName,
+  UserAvatar,
+  UserBadges,
+} from "@rede-enois/design-system/domain";
+import {
+  Button,
+  ConfirmDialog,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  Pill,
+  Textarea,
+  useToast,
+} from "@rede-enois/design-system/ui";
+import {
   Camera,
   ChevronDown,
   ChevronRight,
@@ -29,27 +48,18 @@ import {
 import { groupsApi } from "@/lib/api";
 import { resolveCdnUrl } from "@/lib/api/media";
 import { useCurrentUser } from "@/lib/current-user";
+import { dataHora, hora } from "@/lib/date/format";
 import { useIsAuthenticated } from "@/lib/use-auth";
 import { useMediaUpload } from "@/lib/use-media-upload";
-
-import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Pill } from "@/components/ui/pill";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/toast";
 
 import { AppContainer } from "@/components/app-container";
 import { HtmlEditor } from "@/components/html-editor";
 import { MentionTextarea } from "@/components/mention-textarea";
-import { ReactionPicker } from "@/components/post/reaction-picker";
+import { formatTime } from "@/components/post/format-time";
 import { ReportDialog } from "@/components/post/report-dialog";
 import { RichText } from "@/components/post/rich-text";
 import { SandboxedHtmlFrame } from "@/components/post/sandboxed-html-frame";
-import { UserAvatar } from "@/components/user-avatar";
-import { UserBadges } from "@/components/user-badge";
+import { ProfilePeek } from "@/components/profile/profile-peek";
 
 export const Route = createFileRoute("/grupos/$slug")({
   head: () => ({ meta: [{ title: texts.groups.seoTitle }] }),
@@ -170,8 +180,8 @@ function GrupoPage() {
                 </span>
               )}
 
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl font-semibold tracking-tight text-text-strong">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <h1 className="min-w-0 wrap-anywhere text-xl font-semibold tracking-tight text-text-strong">
                   {group.name}
                 </h1>
 
@@ -190,7 +200,9 @@ function GrupoPage() {
             </p>
 
             {group.description && (
-              <p className="whitespace-pre-line text-sm text-text-subtle">{group.description}</p>
+              <p className="whitespace-pre-line wrap-anywhere text-sm text-text-subtle">
+                {group.description}
+              </p>
             )}
 
             <div className="flex flex-wrap items-center gap-2">
@@ -275,13 +287,13 @@ function GroupFeed({ group }: { group: GroupView }) {
   const topics = topicsData?.items ?? [];
   const canManage = group.viewerRole === "OWNER" || group.viewerRole === "ADMIN";
   const canModerate = ["OWNER", "ADMIN", "MODERATOR"].includes(group.viewerRole ?? "");
-  const activeTopicId = topicId ?? topics.find((topic) => topic.status === "OPEN")?.id ?? null;
+  const activeTopicId = topicId;
   const activeTopic = topics.find((topic) => topic.id === activeTopicId) ?? null;
 
   const { data: postsData, isLoading: postsLoading } = useQuery({
     queryKey: ["group-posts", group.id, activeTopicId],
     queryFn: () => groupsApi.posts(group.id, activeTopicId ?? undefined),
-    enabled: Boolean(activeTopicId),
+    enabled: group.joined,
   });
 
   // O fixado pode ser de um tópico que não está aberto (ou de uma página antiga): vem do endpoint
@@ -337,8 +349,8 @@ function GroupFeed({ group }: { group: GroupView }) {
             onClick={() => setTopicId(null)}
             className={
               topicId === null
-                ? "rounded-full border border-primary bg-primary-soft px-3 py-1 text-xs font-medium text-primary"
-                : "rounded-full border border-border-soft px-3 py-1 text-xs font-normal text-text-subtle transition hover:text-text-strong"
+                ? "max-w-full wrap-anywhere text-left rounded-full border border-primary bg-primary-soft px-3 py-1 text-xs font-medium text-primary"
+                : "max-w-full wrap-anywhere text-left rounded-full border border-border-soft px-3 py-1 text-xs font-normal text-text-subtle transition hover:text-text-strong"
             }
           >
             {texts.groups.allTopics}
@@ -352,8 +364,8 @@ function GroupFeed({ group }: { group: GroupView }) {
             onClick={() => setTopicId(topic.id)}
             className={
               activeTopicId === topic.id
-                ? "rounded-full border border-primary bg-primary-soft px-3 py-1 text-xs font-medium text-primary"
-                : "rounded-full border border-border-soft px-3 py-1 text-xs font-normal text-text-subtle transition hover:text-text-strong"
+                ? "max-w-full wrap-anywhere text-left rounded-full border border-primary bg-primary-soft px-3 py-1 text-xs font-medium text-primary"
+                : "max-w-full wrap-anywhere text-left rounded-full border border-border-soft px-3 py-1 text-xs font-normal text-text-subtle transition hover:text-text-strong"
             }
           >
             {topic.name}
@@ -427,6 +439,11 @@ function GroupFeed({ group }: { group: GroupView }) {
                   key={post.id}
                   groupId={group.id}
                   post={post}
+                  topicName={
+                    activeTopicId === null
+                      ? topics.find((topic) => topic.id === post.topicId)?.name
+                      : undefined
+                  }
                   canModerate={canModerate}
                   canPin={canManage}
                 />
@@ -472,11 +489,13 @@ function GroupFeed({ group }: { group: GroupView }) {
 function GroupPostItem({
   groupId,
   post,
+  topicName,
   canModerate,
   canPin,
 }: {
   groupId: string;
   post: GroupPost;
+  topicName?: string;
   canModerate: boolean;
   canPin: boolean;
 }) {
@@ -545,23 +564,33 @@ function GroupPostItem({
   });
 
   const currentReaction = (post.myReaction as ReactionType | null) ?? null;
+  const createdTime = hora(post.createdAt);
 
   return (
     <li className="rounded-2xl border border-border-soft bg-surface-card p-4">
-      <div className="flex items-center gap-2">
-        <UserAvatar
-          src={post.authorAvatar}
-          frame={post.authorAvatarFrame}
-          alt={post.authorName ?? ""}
-          className="h-8 w-8 shrink-0"
-        />
+      <div className="flex flex-wrap items-center gap-2">
+        <ProfilePeek
+          username={post.authorUsername}
+          userId={post.authorId}
+          name={post.authorName ?? ""}
+          className="flex min-w-0 items-center gap-2"
+        >
+          <UserAvatar
+            src={post.authorAvatar}
+            frame={post.authorAvatarFrame}
+            alt={post.authorName ?? ""}
+            className="h-8 w-8 shrink-0"
+          />
 
-        <span className="text-sm font-medium text-text-strong">{post.authorName ?? ""}</span>
+          <span className="min-w-0 wrap-anywhere text-sm font-medium text-text-strong">
+            <StyledName name={post.authorName ?? ""} style={post.authorStyle} />
+          </span>
+        </ProfilePeek>
 
         <UserBadges badges={post.authorBadges} />
 
         {post.pinned && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary-soft px-2 py-0.5 text-xs font-medium text-primary">
             <Pin className="h-3 w-3" aria-hidden />
 
             <>{texts.posts.pin.pinned}</>
@@ -569,13 +598,22 @@ function GroupPostItem({
         )}
       </div>
 
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-text-subtle">
+        <time dateTime={post.createdAt} title={dataHora(post.createdAt)}>
+          {`${formatTime(post.createdAt)} · ${createdTime}`}
+        </time>
+
+        {topicName && <span className="wrap-anywhere">{`· ${topicName}`}</span>}
+      </div>
+
       <RichText
         content={post.content}
-        className="mt-2 whitespace-pre-line break-words text-sm text-text-strong"
+        className="mt-2 whitespace-pre-line wrap-anywhere text-sm text-text-strong"
       />
 
-      <div className="mt-2 flex items-center gap-3 text-xs text-text-subtle">
+      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-subtle">
         <ReactionPicker
+          emojis={REACTION_EMOJIS}
           activeType={currentReaction}
           onReact={(type) => react.mutate(type)}
           buttonClassName="inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs text-text-subtle transition hover:text-text-strong"
@@ -649,23 +687,45 @@ function GroupPostItem({
             <ul className="space-y-2">
               {comments.map((item) => (
                 <li key={item.id} className="flex items-start gap-2">
-                  <UserAvatar
-                    src={item.authorAvatar}
-                    frame={item.authorAvatarFrame}
-                    alt={item.authorName ?? ""}
-                    className="h-6 w-6 shrink-0"
-                  />
+                  <ProfilePeek
+                    username={item.authorUsername}
+                    userId={item.authorId}
+                    name={item.authorName ?? ""}
+                    className="shrink-0"
+                  >
+                    <UserAvatar
+                      src={item.authorAvatar}
+                      frame={item.authorAvatarFrame}
+                      alt={item.authorName ?? ""}
+                      className="h-6 w-6 shrink-0"
+                    />
+                  </ProfilePeek>
 
                   <div className="min-w-0">
-                    <p className="flex items-center gap-1 text-xs font-medium text-text-strong">
-                      <>{item.authorName ?? ""}</>
+                    <p className="flex min-w-0 flex-wrap items-center gap-1 text-xs font-medium text-text-strong">
+                      <ProfilePeek
+                        username={item.authorUsername}
+                        userId={item.authorId}
+                        name={item.authorName ?? ""}
+                        className="min-w-0 wrap-anywhere hover:underline"
+                      >
+                        <StyledName name={item.authorName ?? ""} style={item.authorStyle} />
+                      </ProfilePeek>
 
                       <UserBadges badges={item.authorBadges} />
                     </p>
 
+                    <time
+                      dateTime={item.createdAt}
+                      title={dataHora(item.createdAt)}
+                      className="block text-xs text-text-subtle"
+                    >
+                      {`${formatTime(item.createdAt)} · ${hora(item.createdAt)}`}
+                    </time>
+
                     <RichText
                       content={item.content}
-                      className="whitespace-pre-line break-words text-sm text-text-strong"
+                      className="whitespace-pre-line wrap-anywhere text-sm text-text-strong"
                     />
                   </div>
                 </li>
@@ -682,6 +742,9 @@ function GroupPostItem({
               className="min-h-10 rounded-lg border border-border-soft bg-transparent px-3 py-2 text-sm text-text-strong"
               rows={1}
               toolbar
+              onSubmitShortcut={() => {
+                if (comment.trim() && !sendComment.isPending) sendComment.mutate();
+              }}
             />
 
             <Button
@@ -1080,15 +1143,22 @@ function AdminPanel({ group }: { group: GroupView }) {
                 key={request.id}
                 className="flex flex-wrap items-center gap-2 rounded-xl bg-surface-1 px-3 py-2"
               >
-                <UserAvatar
-                  src={request.avatar}
-                  alt={request.name ?? ""}
-                  className="h-7 w-7 shrink-0"
-                />
+                <ProfilePeek
+                  username={request.username}
+                  userId={request.userId}
+                  name={nameOf(request)}
+                  className="flex min-w-[10rem] flex-1 items-center gap-2"
+                >
+                  <UserAvatar
+                    src={request.avatar}
+                    alt={request.name ?? ""}
+                    className="h-7 w-7 shrink-0"
+                  />
 
-                <span className="min-w-0 flex-1 truncate text-sm text-text-strong">
-                  {nameOf(request)}
-                </span>
+                  <span className="min-w-0 truncate text-sm text-text-strong">
+                    <StyledName name={nameOf(request)} style={request.nameStyle} />
+                  </span>
+                </ProfilePeek>
 
                 <Button
                   size="sm"
@@ -1138,15 +1208,22 @@ function AdminPanel({ group }: { group: GroupView }) {
                 key={member.userId}
                 className="flex flex-wrap items-center gap-2 rounded-xl bg-surface-1 px-3 py-2"
               >
-                <UserAvatar
-                  src={member.avatar}
-                  alt={member.name ?? ""}
-                  className="h-7 w-7 shrink-0"
-                />
+                <ProfilePeek
+                  username={member.username}
+                  userId={member.userId}
+                  name={nameOf(member)}
+                  className="flex min-w-[10rem] flex-1 items-center gap-2"
+                >
+                  <UserAvatar
+                    src={member.avatar}
+                    alt={member.name ?? ""}
+                    className="h-7 w-7 shrink-0"
+                  />
 
-                <span className="min-w-0 flex-1 truncate text-sm text-text-strong">
-                  {nameOf(member)}
-                </span>
+                  <span className="min-w-0 truncate text-sm text-text-strong">
+                    <StyledName name={nameOf(member)} style={member.nameStyle} />
+                  </span>
+                </ProfilePeek>
 
                 <span className="text-xs text-text-subtle">{roleLabel(member.role)}</span>
 

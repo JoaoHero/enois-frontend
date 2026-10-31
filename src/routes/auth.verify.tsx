@@ -4,14 +4,14 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { texts } from "@/texts";
 import type { VerifyStatus } from "@/types/routes/auth/verify-status";
+import { Button } from "@rede-enois/design-system/ui";
 import { CheckCircle2, Loader2, MailCheck, MailWarning } from "lucide-react";
 import { z } from "zod";
 
 import { ApiError, authApi } from "@/lib/api";
-import { getSessionToken } from "@/lib/api-client";
+import { landingPathFor } from "@/lib/onboarding";
+import { hasSessionFlag } from "@/lib/session";
 import { storeSession } from "@/lib/session";
-
-import { Button } from "@/components/ui/button";
 
 const searchSchema = z.object({
   token: z.string().optional(),
@@ -37,6 +37,7 @@ function VerifyEmail() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const [status, setStatus] = useState<VerifyStatus>("verifying");
+  const [landing, setLanding] = useState<"/feed" | "/boas-vindas">("/feed");
   const handled = useRef(false);
 
   useEffect(() => {
@@ -64,7 +65,9 @@ function VerifyEmail() {
       .then((auth) => {
         storeSession(auth);
         setStatus("done");
-        setTimeout(() => navigate({ to: "/feed", replace: true }), 1500);
+        const landing = landingPathFor(auth.user);
+        setLanding(landing);
+        setTimeout(() => navigate({ to: landing, replace: true }), 1500);
       })
       .catch((error: unknown) => {
         const code = error instanceof ApiError ? error.code : undefined;
@@ -73,7 +76,7 @@ function VerifyEmail() {
         // O link consumido NAO volta: se a pessoa ja tem sessao, a conta foi confirmada em
         // outra aba (ou o link ja foi usado) — dizer "link invalido" seria errado e
         // mandaria a pessoa pedir outro link sem necessidade.
-        else if (code === "INVALID_TOKEN" && getSessionToken()) setStatus("used");
+        else if (code === "INVALID_TOKEN" && hasSessionFlag()) setStatus("used");
         else setStatus("invalid");
       });
   };
@@ -121,7 +124,7 @@ function VerifyEmail() {
 
             <Button
               className="mt-6 w-full rounded-full"
-              onClick={() => navigate({ to: "/feed", replace: true })}
+              onClick={() => navigate({ to: landing, replace: true })}
             >
               {texts.auth.verify.goToApp}
             </Button>

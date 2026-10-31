@@ -28,7 +28,8 @@ vi.mock("@/components/app-container", () => ({
   AppContainer: ({ children }: { children: ReactNode }) => <div>{children}</div>,
 }));
 vi.mock("@/components/blog/blog-editor-dialog", () => ({ BlogEditorDialog: () => null }));
-vi.mock("@/components/ui/toast", () => ({ useToast: () => ({ toast: vi.fn() }) }));
+vi.mock("@/components/events/saci-spot", () => ({ SaciSpot: () => null }));
+vi.mock("@/components/mentoring/my-sessions-section", () => ({ MySessionsSection: () => null }));
 vi.mock("@tanstack/react-router", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@tanstack/react-router")>()),
   Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,

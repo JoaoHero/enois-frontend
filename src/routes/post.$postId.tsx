@@ -1,8 +1,12 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 
+import { useQuery } from "@tanstack/react-query";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+
+import { usePostCardStore } from "@/stores/post-card.store";
 import { texts } from "@/texts";
 import type { HomeTab } from "@/types/routes/feed/home-tab";
+import { PostCardSkeletons } from "@rede-enois/design-system/domain";
 import { ArrowLeft } from "lucide-react";
 
 import { feedApi, mediaApi } from "@/lib/api";
@@ -11,10 +15,13 @@ import { buildPostShareMeta } from "@/lib/open-graph";
 import { AppContainer } from "@/components/app-container";
 import { PostCard } from "@/components/post-card";
 import { RichText } from "@/components/post/rich-text";
-import { PostCardSkeletons } from "@/components/skeletons/post-card-skeletons";
 
 export const Route = createFileRoute("/post/$postId")({
-  validateSearch: (search: Record<string, unknown>): { feedTab?: HomeTab } => ({
+  validateSearch: (search: Record<string, unknown>): { feedTab?: HomeTab; reacoes?: true } => ({
+    // A grouped reaction notification ("Ana e mais 14 pessoas reagiram") opens the list of who
+    // reacted, one by one.
+    reacoes:
+      search.reacoes === 1 || search.reacoes === "1" || search.reacoes === true ? true : undefined,
     feedTab:
       search.feedTab === "FOR_YOU" ||
       search.feedTab === "ALL" ||
@@ -102,7 +109,9 @@ export const Route = createFileRoute("/post/$postId")({
 
 function PostDetail() {
   const { postId } = Route.useParams();
-  const { feedTab } = Route.useSearch();
+  const { feedTab, reacoes } = Route.useSearch();
+  const navigate = useNavigate();
+  const setShowReactions = usePostCardStore((state) => state.setShowReactions);
 
   const {
     data: post,
@@ -112,6 +121,19 @@ function PostDetail() {
     queryKey: ["post", postId],
     queryFn: () => feedApi.get(postId),
   });
+
+  // Opens once: the parameter leaves the address, so closing the list (or reloading) stays closed.
+  const loaded = Boolean(post);
+  useEffect(() => {
+    if (!reacoes || !loaded) return;
+    setShowReactions(postId, true);
+    void navigate({
+      to: "/post/$postId",
+      params: { postId },
+      search: (previous) => ({ ...previous, reacoes: undefined }),
+      replace: true,
+    });
+  }, [reacoes, loaded, postId, setShowReactions, navigate]);
 
   return (
     <AppContainer>

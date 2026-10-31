@@ -1,5 +1,7 @@
 import { redirect } from "@tanstack/react-router";
 
+import { hasSessionFlag } from "./session";
+
 /**
  * Rotas que exigem sessao. Precisa espelhar o `beforeLoad: requireAuth` declarado nas rotas:
  * o guard de rota roda no SSR, onde nao existe localStorage, entao quem abre uma URL protegida
@@ -19,17 +21,20 @@ const PROTECTED_ROUTES = [
   // "/jogos-diarios" saiu de proposito: a rota virou um redirecionamento para a categoria
   // diaria dentro de /games, e o proprio painel e que pede a conta.
   "/feed",
+  "/boas-vindas",
   "/rede",
   "/salvos",
   "/mensagens",
   "/suporte",
   "/bloqueados",
   "/seguranca",
+  "/notificacoes",
+  "/par-de-estudo",
 ];
 
 export function hasSession(): boolean {
   if (typeof window === "undefined") return true;
-  return Boolean(localStorage.getItem("session_token"));
+  return hasSessionFlag();
 }
 
 export function isProtectedPath(pathname: string): boolean {
@@ -39,7 +44,7 @@ export function isProtectedPath(pathname: string): boolean {
 /** Usado no `beforeLoad` das rotas: redireciona para o login quando nao ha sessao no cliente. */
 export function requireAuth() {
   if (typeof window === "undefined") return;
-  if (!localStorage.getItem("session_token")) {
+  if (!hasSessionFlag()) {
     throw redirect({ to: "/entrar", search: { tab: "login" } });
   }
 }

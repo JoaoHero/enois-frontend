@@ -2,14 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { texts } from "@/texts";
+import { EmptyState, LoadingState } from "@rede-enois/design-system/ui";
 import { ArrowLeft, Code2, Globe } from "lucide-react";
 
 import { communityProjectsApi } from "@/lib/api";
-
-import { EmptyState } from "@/components/ui/empty-state";
-import { LoadingState } from "@/components/ui/loading-state";
+import { safeHref } from "@/lib/safe-url";
 
 import { AppContainer } from "@/components/app-container";
+import { ProjectCover } from "@/components/projects/project-cover";
 
 export const Route = createFileRoute("/projetos/$username/$projectSlug")({
   head: ({ params }) => ({
@@ -60,11 +60,10 @@ function ProjectDetail() {
         <BackLink />
 
         <article className="surface-card overflow-hidden">
-          {data.cover ? (
-            <img src={data.cover} alt="" className="h-56 w-full object-cover sm:h-72" />
-          ) : (
-            <div className="h-40 w-full" style={{ background: "var(--gradient-primary)" }} />
-          )}
+          <ProjectCover
+            src={data.cover}
+            className={data.cover ? "h-56 w-full sm:h-72" : "h-40 w-full"}
+          />
 
           <div className="space-y-4 p-5 sm:p-6">
             <div className="space-y-1">
@@ -108,7 +107,7 @@ function ProjectDetail() {
 
             <div className="flex flex-wrap gap-2 pt-1">
               {data.url && (
-                <a href={data.url} target="_blank" rel="noopener noreferrer">
+                <a href={safeHref(data.url) ?? undefined} target="_blank" rel="noopener noreferrer">
                   <span className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground">
                     <Globe className="h-4 w-4" />
 
@@ -118,7 +117,11 @@ function ProjectDetail() {
               )}
 
               {data.repoUrl && (
-                <a href={data.repoUrl} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={safeHref(data.repoUrl) ?? undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   <span className="inline-flex items-center gap-2 rounded-full border border-border-soft px-4 py-2 text-sm font-medium text-text-strong">
                     <Code2 className="h-4 w-4" />
 

@@ -4,6 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { texts } from "@/texts";
+import { StyledName, UserAvatar } from "@rede-enois/design-system/domain";
+import { Button, EmptyState, Input, LoadingState, PageHeader } from "@rede-enois/design-system/ui";
 import { BookOpen, PenLine, Plus, Search } from "lucide-react";
 
 import { blogsApi } from "@/lib/api/blogs";
@@ -11,16 +13,10 @@ import { requireAuth } from "@/lib/require-auth";
 import { ogMetas } from "@/lib/seo";
 import { useIsAuthenticated } from "@/lib/use-auth";
 
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
-import { Input } from "@/components/ui/input";
-import { LoadingState } from "@/components/ui/loading-state";
-import { PageHeader } from "@/components/ui/page-header";
-
 import { AppContainer } from "@/components/app-container";
 import { BlogEditorDialog } from "@/components/blog/blog-editor-dialog";
+import { SaciSpot } from "@/components/events/saci-spot";
 import { RichText } from "@/components/post/rich-text";
-import { UserAvatar } from "@/components/user-avatar";
 
 export const Route = createFileRoute("/blogs")({
   head: () => ({
@@ -88,6 +84,8 @@ function Blogs() {
                   </Button>
                 </Link>
               )}
+
+              <SaciSpot spot="blog" />
             </>
           }
         />
@@ -156,7 +154,8 @@ function Blogs() {
                     </p>
 
                     <p className="truncate text-xs font-normal text-text-subtle">
-                      {blog.authorName} · {texts.blog.postsCount(blog.posts)}
+                      <StyledName name={blog.authorName} style={blog.authorStyle} /> ·{" "}
+                      {texts.blog.postsCount(blog.posts)}
                     </p>
                   </div>
                 </div>

@@ -5,16 +5,15 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 
 import { texts } from "@/texts";
 import type { JobApplication } from "@/types/application/job/job-application";
+import { UserAvatar } from "@rede-enois/design-system/domain";
+import { Button } from "@rede-enois/design-system/ui";
 import { ArrowLeft, BadgeCheck, Loader2, MessageCircle, ShieldAlert } from "lucide-react";
 
 import { jobsApi } from "@/lib/api";
 import { actionsFor, statusTone } from "@/lib/job-application-status";
 import { requireAuth } from "@/lib/require-auth";
 
-import { Button } from "@/components/ui/button";
-
 import { AppContainer } from "@/components/app-container";
-import { UserAvatar } from "@/components/user-avatar";
 
 export const Route = createFileRoute("/vagas/$jobId/candidaturas")({
   beforeLoad: requireAuth,
@@ -162,8 +161,13 @@ function JobApplications() {
 
                 <div className="flex shrink-0 gap-2">
                   {application.candidate?.username && (
+                    // Candidaturas antigas (retrato SOCIAL) continuam no perfil em que foram feitas.
                     <Link
-                      to="/perfil/$username"
+                      to={
+                        application.candidate.identity === "CORPORATE"
+                          ? "/profissional/$username"
+                          : "/perfil/$username"
+                      }
                       params={{ username: application.candidate.username }}
                     >
                       <Button variant="outline" size="sm" className="rounded-full">

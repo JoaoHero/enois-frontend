@@ -10,19 +10,20 @@ Plataforma de networking profissional focada em conexões humanas autênticas, m
 - **Tailwind CSS 4** + **shadcn/ui**
 - **Vite 7** (bundler)
 - **Nitro** (deploy SSR)
-- Backend Java/Kotlin em `https://rede.fly.dev`
+- Backend em Java, servido por `https://enois.ia.br/api` (o proxy de dev aponta para ele)
 
 ## Índice da Documentação
 
-| Documento                                  | Descrição                               |
-| ------------------------------------------ | --------------------------------------- |
-| [Arquitetura](arquitetura.md)              | Visão geral da arquitetura do projeto   |
-| [Rotas](rotas.md)                          | Todas as rotas/páginas da aplicação     |
-| [Componentes](componentes.md)              | Todos os componentes React              |
-| [API - Módulos](api-modulos.md)            | Módulos de API e cliente HTTP           |
-| [Modelos de Dados](modelos-de-dados.md)    | Interfaces e tipos do sistema           |
-| [Configuração](configuracao.md)            | Arquivos de configuração do projeto     |
-| [Integração de jogos](jogos-integracao.md) | Jogos externos no player do Énóis Games |
+| Documento                                                             | Descrição                               |
+| --------------------------------------------------------------------- | --------------------------------------- |
+| [Arquitetura](arquitetura.md)                                         | Visão geral da arquitetura do projeto   |
+| [Rotas](rotas.md)                                                     | Todas as rotas/páginas da aplicação     |
+| [Interfaces social e profissional](interfaces-social-profissional.md) | Seletor, menus e regras de contexto     |
+| [Componentes](componentes.md)                                         | Todos os componentes React              |
+| [API - Módulos](api-modulos.md)                                       | Módulos de API e cliente HTTP           |
+| [Modelos de Dados](modelos-de-dados.md)                               | Interfaces e tipos do sistema           |
+| [Configuração](configuracao.md)                                       | Arquivos de configuração do projeto     |
+| [Integração de jogos](jogos-integracao.md)                            | Jogos externos no player do Énóis Games |
 
 ## Scripts
 
@@ -51,12 +52,10 @@ src/
 ├── components/                  # Componentes React
 │   ├── app-shell.tsx            # Layout principal
 │   ├── edit-profile-dialog.tsx  # Edição de perfil
-│   ├── image-crop-dialog.tsx    # Crop de imagens
 │   ├── mention-textarea.tsx     # Textarea com @menções
 │   ├── post-card.tsx            # Card de post
 │   ├── theme-toggle.tsx         # Alternador de tema
-│   ├── user-avatar.tsx          # Avatar do usuário
-│   └── ui/                      # 46 componentes shadcn/ui
+│   └── …                        # primitivas de UI: @rede-enois/design-system/ui
 ├── hooks/
 │   └── use-mobile.tsx           # Hook de breakpoint mobile
 ├── lib/

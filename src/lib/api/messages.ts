@@ -2,12 +2,14 @@ import type { PageResponse } from "@/types/application/api/page-response";
 import type { Conversation } from "@/types/application/message/conversation";
 import type { CreateConversationInput } from "@/types/application/message/create-conversation-input";
 import type { Message } from "@/types/application/message/message";
+import type { InterfaceContext } from "@rede-enois/design-system/domain";
 
 import { api, buildQuery } from "../api-client";
 
 export const messagesApi = {
-  listConversations: (cursor?: string | null, limit = 20) =>
-    api.get<PageResponse<Conversation>>(`/conversations${buildQuery({ cursor, limit })}`),
+  /** `context` keeps only the social or the professional inbox (omitted = every conversation). */
+  listConversations: (cursor?: string | null, limit = 20, context?: InterfaceContext) =>
+    api.get<PageResponse<Conversation>>(`/conversations${buildQuery({ cursor, limit, context })}`),
 
   createConversation: (data: CreateConversationInput) =>
     api.post<Conversation>("/conversations", data),
@@ -28,11 +30,15 @@ export const messagesApi = {
     text: string,
     mediaIds: string[] = [],
     mediaSpoiler = false,
+    e2e?: { ciphertext: string; iv: string },
+    replyToId?: string,
   ) =>
     api.post<Message>(`/conversations/${conversationId}/messages`, {
-      text,
+      text: e2e ? e2e.ciphertext : text,
       mediaIds,
       mediaSpoiler,
+      ...(e2e ? { e2e: true, iv: e2e.iv } : {}),
+      ...(replyToId ? { replyToId } : {}),
     }),
 
   /** Reage a uma mensagem (o backend alterna: mesmo emoji remove). */
@@ -49,8 +55,10 @@ export const messagesApi = {
     api.post<{ hidden: number }>("/conversations/hide", { ids }),
 
   /** As arquivadas (apagadas só para quem chama) — a tela de restaurar. */
-  archivedConversations: (cursor?: string | null, limit = 20) =>
-    api.get<PageResponse<Conversation>>(`/conversations/archived${buildQuery({ cursor, limit })}`),
+  archivedConversations: (cursor?: string | null, limit = 20, context?: InterfaceContext) =>
+    api.get<PageResponse<Conversation>>(
+      `/conversations/archived${buildQuery({ cursor, limit, context })}`,
+    ),
 
   /** "Apagar para mim" por mensagem (some só para quem apagou). */
   hideMessages: (conversationId: string, ids: string[]) =>
@@ -62,4 +70,8 @@ export const messagesApi = {
 
   search: (q: string, limit = 20) =>
     api.get<PageResponse<Conversation>>(`/conversations/search${buildQuery({ q, limit })}`),
+
+  /** Mensagens nao lidas: de uma interface, ou de todas as conversas sem `context`. */
+  unreadCount: (context?: InterfaceContext) =>
+    api.get<{ count: number }>(`/conversations/unread-count${buildQuery({ context })}`),
 };

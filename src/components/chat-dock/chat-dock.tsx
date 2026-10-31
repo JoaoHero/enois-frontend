@@ -1,0 +1,183 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+
+import { useChatDockStore } from "@/stores/chat-dock.store";
+import { texts } from "@/texts";
+import { ChatDock as ChatDockView } from "@rede-enois/design-system/domain";
+
+import { authApi, messagesApi } from "@/lib/api";
+import { janelasQueCabem } from "@/lib/chat-dock/chat-dock-layout";
+import { useLarguraDaJanela } from "@/lib/chat-dock/use-largura-da-janela";
+import { hasLocalKeys } from "@/lib/e2e/key-manager";
+import { useInterfaceContext } from "@/lib/interface-context";
+import { hasSession } from "@/lib/require-auth";
+import { useIsAuthenticated } from "@/lib/use-auth";
+
+import { ConversationItem } from "@/components/messages/conversation-item";
+import { E2eSetupBanner } from "@/components/messages/e2e-setup-banner";
+
+import { ChatDockWindow } from "./chat-dock-window";
+
+/**
+ * Dock de mensagens flutuante — fixed no canto inferior direito, presente em
+ * todas as paginas desktop. So renderiza quando ha sessao ativa.
+ *
+ * 3 estados visuais:
+ * 1. Barra colapsada (icone + badge de nao-lidas)
+ * 2. Lista de conversas (painel expandido)
+ * 3. Mini-janelas de conversa aberta (ao lado da barra/lista)
+ */
+export function ChatDock() {
+  const authenticated = useIsAuthenticated();
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
+
+  if (!hydrated || !authenticated || !hasSession()) return null;
+
+  return <ChatDockInner />;
+}
+
+function ChatDockInner() {
+  const queryClient = useQueryClient();
+  const larguraDaJanela = useLarguraDaJanela();
+
+  // Gate E2E: sem chaves locais, o dock mostra o setup em vez das conversas.
+  const [e2eReady, setE2eReady] = useState<boolean | null>(null);
+  useEffect(() => {
+    hasLocalKeys().then(setE2eReady);
+  }, []);
+  const { data: authMe } = useQuery({
+    queryKey: ["auth-me"],
+    queryFn: () => authApi.me(),
+    enabled: e2eReady === false,
+  });
+
+  const expanded = useChatDockStore((s) => s.expanded);
+  const openChats = useChatDockStore((s) => s.openChats);
+  const toggleExpanded = useChatDockStore((s) => s.toggleExpanded);
+  const expand = useChatDockStore((s) => s.expand);
+  const openChat = useChatDockStore((s) => s.openChat);
+
+  const context = useInterfaceContext();
+  const {
+    data: conversationsData,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    // The dock follows the active interface: work conversations never pop up in the social one.
+    queryKey: ["conversations", "inbox", context],
+    queryFn: ({ pageParam }) => messagesApi.listConversations(pageParam, 20, context),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+    staleTime: 120_000,
+  });
+
+  const { data: unreadData } = useQuery({
+    queryKey: ["conversations", "unread-count", context],
+    queryFn: () => messagesApi.unreadCount(context),
+    refetchInterval: expanded ? 15_000 : 60_000,
+  });
+
+  const totalUnread = unreadData?.count ?? 0;
+  const contextLabel =
+    context === "PROFESSIONAL"
+      ? texts.navigation.context.professional
+      : texts.navigation.context.social;
+  // The dock opens by itself only when a NEW message arrives: the first reading of each interface
+  // is the baseline (unread messages pending on page load, or in the inbox one switches to, are
+  // not news). The count of the other interface never counts as the baseline of this one.
+  const baselineRef = useRef<{ context: string; count: number } | null>(null);
+  useEffect(() => {
+    if (unreadData === undefined) return;
+    const baseline = baselineRef.current;
+    if (baseline?.context === context && unreadData.count > baseline.count) {
+      expand();
+      queryClient.invalidateQueries({ queryKey: ["conversations", "inbox", context] });
+    }
+    baselineRef.current = { context, count: unreadData.count };
+  }, [unreadData, context, expand, queryClient]);
+
+  const markAsRead = useMutation({
+    mutationFn: (id: string) => messagesApi.markAsRead(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+
+  const conversations = useMemo(
+    () =>
+      [...(conversationsData?.pages.flatMap((p) => p.items) ?? [])].sort((a, b) => {
+        if (!a.time || !b.time) return 0;
+        return new Date(b.time).getTime() - new Date(a.time).getTime();
+      }),
+    [conversationsData],
+  );
+
+  /*
+   * O dock e ancorado a direita e cresce para a ESQUERDA: cada mini-janela tem 22rem. Se abrirem
+   * mais janelas do que cabem, a mais a esquerda sai da tela (medido em 2026-10-28: a 1024px com
+   * 2 janelas a primeira comeca em -32px; a 1280px com 4, em -496px) e o botao de fechar dela
+   * fica fora do alcance. Aqui so se desenha o que cabe — a conversa continua aberta no estado.
+   */
+  const janelasVisiveis = openChats.slice(0, janelasQueCabem(larguraDaJanela, openChats.length));
+
+  const handleSelectConversation = (id: string) => {
+    openChat(id);
+    const conv = conversations.find((c) => c.id === id);
+    if (conv && conv.unread > 0) markAsRead.mutate(id);
+  };
+
+  if (e2eReady === false) {
+    return (
+      <ChatDockView
+        expanded={expanded}
+        onToggleExpanded={toggleExpanded}
+        unreadCount={0}
+        contextLabel={contextLabel}
+        windows={[]}
+        // Not "empty": the list is replaced by the key setup. Saying "Nenhuma conversa ainda" here
+        // hid both the conversations and the setup banner (the view draws one or the other).
+        empty={false}
+        hasMore={false}
+        loadingMore={false}
+        onLoadMore={() => {}}
+      >
+        {authMe && (
+          <div className="flex flex-col items-center gap-3 p-4">
+            <E2eSetupBanner
+              hasPassword={authMe.hasPassword}
+              onSetupComplete={() => setE2eReady(true)}
+            />
+          </div>
+        )}
+      </ChatDockView>
+    );
+  }
+
+  return (
+    <ChatDockView
+      expanded={expanded}
+      onToggleExpanded={toggleExpanded}
+      unreadCount={totalUnread}
+      contextLabel={contextLabel}
+      windows={janelasVisiveis.map((id) => (
+        <ChatDockWindow key={id} conversationId={id} />
+      ))}
+      empty={conversations.length === 0}
+      hasMore={hasNextPage}
+      loadingMore={isFetchingNextPage}
+      onLoadMore={() => fetchNextPage()}
+    >
+      {conversations.map((c) => (
+        <ConversationItem
+          key={c.id}
+          conversation={c}
+          isActive={openChats.includes(c.id)}
+          onSelect={() => handleSelectConversation(c.id)}
+        />
+      ))}
+    </ChatDockView>
+  );
+}

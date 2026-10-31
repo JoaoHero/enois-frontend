@@ -5,16 +5,18 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 
 import { texts } from "@/texts";
 import type { CommunityProjectView } from "@/types/application/projects/community-project-view";
+import {
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  LoadingState,
+  useToast,
+} from "@rede-enois/design-system/ui";
 import { ArrowLeft, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 
 import { communityProjectsApi } from "@/lib/api";
+import { projectQueries } from "@/lib/query-options/projects";
 import { requireAuth } from "@/lib/require-auth";
-
-import { Button } from "@/components/ui/button";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { EmptyState } from "@/components/ui/empty-state";
-import { LoadingState } from "@/components/ui/loading-state";
-import { useToast } from "@/components/ui/toast";
 
 import { AppContainer } from "@/components/app-container";
 import { ProjectFormDialog } from "@/components/projects/project-form-dialog";
@@ -33,11 +35,10 @@ function ProjectsPanel() {
   const [removing, setRemoving] = useState<CommunityProjectView | null>(null);
 
   const mine = useQuery({
-    queryKey: ["projects", "mine"],
-    queryFn: () => communityProjectsApi.mine(),
+    ...projectQueries.communityMine(),
   });
 
-  const refresh = () => void queryClient.invalidateQueries({ queryKey: ["projects"] });
+  const refresh = () => void queryClient.invalidateQueries({ queryKey: projectQueries.all });
 
   const resubmit = useMutation({
     mutationFn: (projectId: string) => communityProjectsApi.resubmit(projectId),

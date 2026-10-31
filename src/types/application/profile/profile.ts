@@ -1,3 +1,5 @@
+import type { ProfileGardenData } from "@rede-enois/design-system/domain";
+
 export type Profile = {
   id: string;
   username: string;
@@ -6,6 +8,14 @@ export type Profile = {
   email: string;
   company: string | null;
   location: string | null;
+  /**
+   * Cidade e UF estruturadas, separadas do `location` livre. `/me` sempre devolve; o perfil
+   * público só devolve quando `showCity` é verdadeiro.
+   */
+  city?: string | null;
+  state?: string | null;
+  /** Mostrar a cidade no perfil público (padrão false). Só vem em `/me`. */
+  showCity?: boolean;
   avatar: string | null;
   banner: string | null;
   /** Emblema (PNG pequeno) exibido ao lado do nome; URL de mídia, como avatar e banner. */
@@ -27,6 +37,8 @@ export type Profile = {
   connectionsCount?: number;
   followersCount?: number;
   reputation?: number;
+  /** Reputation drawn as a garden; null where the read does not compute counts (search, ranking). */
+  garden?: ProfileGardenData | null;
   /** Total de publicações do perfil social. Ausente quando a leitura não calcula contagens. */
   postsCount?: number | null;
   /** Apelido: entra entre parênteses depois do nome (preferência da pessoa). */
@@ -42,14 +54,26 @@ export type Profile = {
   /** Moldura de avatar equipada (loja de cosméticos). */
   avatarFrame?: string | null;
   /** Fonte segura escolhida para o nome do perfil. */
-  nameFont?: "SYSTEM" | "SERIF" | "MONO" | "ROUNDED" | "DISPLAY" | null;
+  nameFont?: import("@/types/application/cosmetics/profile-name-font").ProfileNameFont | null;
   /** Cor hexadecimal escolhida para o nome do perfil. */
   nameColor?: string | null;
   /** Tema declarativo do nome do perfil, com fonte, paleta e efeito seguros. */
-  nameTheme?: "DEFAULT" | "PIXEL" | "GOTHIC" | "NEON" | "GLITCH" | "CANDY" | null;
+  nameTheme?: import("@/types/application/cosmetics/profile-name-theme").ProfileNameTheme | null;
+  /** Cor da tag "Contribuinte" abaixo do nome; só quem tem contribuição verificada escolhe. */
+  contributorTagColor?: string | null;
   /** Currículo em PDF (endereço no storage) — só o dono recebe estes dois campos. */
   resumeUrl?: string | null;
   resumeName?: string | null;
   /** Até 5 emblemas; o primeiro acompanha o nome por todo o app. */
   badges?: string[] | null;
+  /** Shop items equipped on the profile card (cosmetic catalog ids). */
+  cardTheme?: string | null;
+  nameplate?: string | null;
+  bannerItem?: string | null;
+  profileEffect?: string | null;
+  /** Equipped GARDEN item id; null draws the default garden. */
+  gardenStyle?: string | null;
+  /** Status bubble: up to 60 characters and a cosmetic icon key. */
+  statusText?: string | null;
+  statusIcon?: string | null;
 };
