@@ -212,6 +212,14 @@ Página pública (mostra layout mesmo sem auth, mas sem funcionalidade).
   dois casos o desvio acontece **uma vez por sessão** (`sessionStorage`): sair sem concluir nunca
   prende a pessoa fora do feed.
 
+### What's new popup
+
+`WhatsNewGate` (`src/components/whats-new/whats-new-gate.tsx`, mounted on the root) opens the DS
+`WhatsNewDialog` on `/feed` once per release, only after the onboarding is done and never on top of
+an admin notice popup. The release lives in `src/constants/whats-new.ts`: to announce a new one,
+replace the items and change `WHATS_NEW.id`. The last seen id is kept in `localStorage`
+(`whats-new-seen`), so each browser shows it once. Only curated releases go there, not every deploy.
+
 ## `/notificacoes/preferencias` - Preferências de notificação (`src/routes/notificacoes.preferencias.tsx`)
 
 **Auth:** Obrigatória (também na revalidação central do cliente)
