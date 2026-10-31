@@ -238,7 +238,11 @@ function Home() {
   // o feed corporativo não aparece.
   const context = useInterfaceContext();
   const professional = context === "PROFESSIONAL";
-  const tab: HomeTab = professional ? "CORPORATE" : aba === "CORPORATE" ? "ALL" : (aba ?? "ALL");
+  const tab: HomeTab = professional
+    ? "CORPORATE"
+    : aba === "CORPORATE"
+      ? "FOR_YOU"
+      : (aba ?? "FOR_YOU");
   const setTab = (next: HomeTab) => {
     if (next === tab) return;
     void navigate({ search: { aba: next }, replace: true });
