@@ -59,7 +59,7 @@ import {
 import { authApi, corporateApi, eventsApi, feedApi, networkApi, profileApi } from "@/lib/api";
 import { dataHora, valorDeDataLocal } from "@/lib/date/format";
 import { clearFeedScroll, readFeedScroll } from "@/lib/feed-scroll-restoration";
-import { caughtUpIndex, isDateOrderedTab, useMarkFeedSeen } from "@/lib/feed/caught-up";
+import { carriesCaughtUp, caughtUpOrder, useMarkFeedSeen } from "@/lib/feed/caught-up";
 import { effectiveIdentity, professionalReady, useInterfaceContext } from "@/lib/interface-context";
 import { litePageSize } from "@/lib/lite-mode";
 import { requireAuth } from "@/lib/require-auth";
@@ -240,7 +240,11 @@ function Home() {
   // o feed corporativo não aparece.
   const context = useInterfaceContext();
   const professional = context === "PROFESSIONAL";
-  const tab: HomeTab = professional ? "CORPORATE" : aba === "CORPORATE" ? "ALL" : (aba ?? "ALL");
+  const tab: HomeTab = professional
+    ? "CORPORATE"
+    : aba === "CORPORATE"
+      ? "FOR_YOU"
+      : (aba ?? "FOR_YOU");
   const setTab = (next: HomeTab) => {
     if (next === tab) return;
     void navigate({ search: { aba: next }, replace: true });
@@ -539,17 +543,20 @@ function Home() {
 
   const mediaType = media.length > 0 ? (media[0].type === "image" ? "image" : "video") : null;
 
-  const feedPosts = feedData?.pages.flatMap((page) => page.items) ?? [];
-  // O marcador vale como chegou na primeira página DESTA visita, por aba: depois do POST
-  // /feed/seen, um refetch traria o novo valor e o divisor pularia para o topo enquanto a pessoa
-  // lê. Por aba porque as ranqueadas recebem sempre null e não podem apagar o das cronológicas.
+  // "Você está em dia" lives only on "Para você". The marker counts as it arrived on the first page
+  // OF THIS VISIT: after POST /feed/seen a refetch would bring the new value and the divider would
+  // jump to the top while the person reads.
   const firstPage = feedData?.pages[0];
-  const [lastSeenByTab, setLastSeenByTab] = useState<Partial<Record<HomeTab, string | null>>>({});
-  if (!(tab in lastSeenByTab) && firstPage) {
-    setLastSeenByTab((current) => ({ ...current, [tab]: firstPage.lastSeenAt ?? null }));
+  const caughtUpTab = carriesCaughtUp(tab);
+  const [lastSeenAt, setLastSeenAt] = useState<string | null | undefined>(undefined);
+  if (lastSeenAt === undefined && caughtUpTab && firstPage) {
+    setLastSeenAt(firstPage.lastSeenAt ?? null);
   }
-  const caughtUpAt = caughtUpIndex(feedPosts, lastSeenByTab[tab] ?? null);
-  const firstPostRef = useMarkFeedSeen(feedPosts, isDateOrderedTab(tab));
+  const { posts: feedPosts, caughtUpAt } = caughtUpOrder(
+    feedData?.pages.flatMap((page) => page.items) ?? [],
+    caughtUpTab ? (lastSeenAt ?? null) : null,
+  );
+  const firstPostRef = useMarkFeedSeen(feedPosts, caughtUpTab);
 
   useEffect(() => {
     const updateScrollTopVisibility = () => setShowScrollTop(window.scrollY > 400);

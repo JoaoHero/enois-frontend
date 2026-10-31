@@ -2,6 +2,7 @@ import { useEffect } from "react";
 
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
+  type ErrorComponentProps,
   HeadContent,
   Link,
   Outlet,
@@ -15,7 +16,6 @@ import {
 import { texts } from "@/texts";
 import type { WithRequiredChildren } from "@/types/components/with-required-children";
 import type { PushNavigateMessage } from "@/types/push/push-navigate-message";
-import type { ErrorComponentProps } from "@/types/routes/root/error-component-props";
 import type { RootRouteContext } from "@/types/routes/root/root-route-context";
 import { navigateToHref } from "@/utils/navigation";
 import { ToastProvider, buttonVariants } from "@rede-enois/design-system/ui";
