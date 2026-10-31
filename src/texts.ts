@@ -2657,6 +2657,10 @@ export const texts = {
       published: "Novidades publicadas. O popup abre de novo para todo mundo.",
       retired: "Novidades tiradas do ar.",
       error: "Não foi possível publicar as novidades.",
+      readErrorTitle: "Não deu para ler as novidades no ar",
+      readErrorDescription:
+        "Sem saber o que está publicado, o formulário fica fechado para você não sobrescrever nada sem querer.",
+      retryRead: "Tentar de novo",
       liveSince: (raw: string) => {
         const at = new Date(raw);
         return Number.isNaN(at.getTime())
