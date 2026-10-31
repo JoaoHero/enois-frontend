@@ -19,7 +19,7 @@
 
 ## Checklist
 
-- [ ] Criei a branch a partir da `main` atualizada e a PR é contra `main`
+- [ ] Branch created from an up-to-date `qa` and the PR targets `qa` (hotfix: `main`)
 - [ ] A PR trata de um único tema
 - [ ] `npm run lint`, `npm run typecheck`, `npx vitest run` e `npm run build` passam
 - [ ] Descrevi acima como verifiquei ("roda" não é verificação)
