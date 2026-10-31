@@ -388,7 +388,8 @@ com ação própria (não espera o resto do formulário); o formato é validado 
 `src/lib/corporate/nametag.ts`, o mesmo do backend. Trocar o nametag muda o endereço público — o
 antigo deixa de responder — sem tocar no perfil social.
 
-O cabeçalho do post público de blog mostra o tempo estimado de leitura do corpo: 200 palavras
+O cabeçalho do post público e o card da lista do blog mostram o tempo estimado de leitura
+na cor secundária do tema. O cálculo considera o corpo: 200 palavras
 por minuto, arredondado para cima, com mínimo de 1 minuto. Markdown reutiliza a extração de
 texto da prévia (sem imagens, blocos de código e spoilers); HTML ignora tags, scripts, estilos
 e comentários. O cálculo ocorre no frontend, também no SSR, sem mudar o contrato da API.
