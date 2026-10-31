@@ -48,3 +48,20 @@ it("sends the person to the onboarding without marking it as shown", async () =>
   expect(mocks.navigate).toHaveBeenCalledWith({ to: "/boas-vindas", replace: true });
   expect(sessionStorage.getItem("onboarding-shown")).toBeNull();
 });
+
+// The screen was seen (it marks itself on mount) and the person left without finishing: the feed
+// lets them stay instead of sending them back to the onboarding.
+it("leaves the person on the feed once the onboarding screen was seen", async () => {
+  sessionStorage.setItem("onboarding-shown", "1");
+  await act(async () =>
+    root.render(
+      <QueryClientProvider client={new QueryClient()}>
+        <OnboardingRedirect />
+      </QueryClientProvider>,
+    ),
+  );
+  await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+
+  expect(mocks.me).toHaveBeenCalled();
+  expect(mocks.navigate).not.toHaveBeenCalled();
+});
