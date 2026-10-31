@@ -28,6 +28,7 @@ Funcionalidades:
 - **Compositor de posts** com textarea com @menção, seletor de tipo (INSIGHT, ARTICLE, QUESTION, PROJECT), upload de mídia (imagem/vídeo)
 - **Identidade ativa:** escolhida no menu da conta; com a profissional, o compositor publica no feed corporativo (`BUSINESS`) e os tipos de página/artigo saem da seleção — regras em `componentes.md`
 - **Abas de filtro:** Para você, Tudo, Seguindo, Discussões, Projetos
+- **`?compor=ARTICLE`:** opens the composer in article mode, then drops the param from the URL. The profile quick composer "Escrever artigo" shortcut links here.
 - **Feed infinito** de `PostCard` components
 - **"Você está em dia":** a primeira página das abas por data (Tudo, Não vistos e as de tipo) traz
   `lastSeenAt`; as ranqueadas (Para você, Em alta, Interagidos) recebem sempre null e nunca chamam
