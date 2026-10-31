@@ -309,7 +309,10 @@ function PostCardContainer({
             onOpenChange={setEditOpen}
             typeOptions={TYPE_OPTIONS}
             editType={editType}
-            onTypeChange={setEditType}
+            // A poll is born in the composer with its options; editing never turns a post into one.
+            onTypeChange={(type) => {
+              if (type !== "POLL") setEditType(type);
+            }}
             draft={draft}
             contentField={
               <MentionTextarea

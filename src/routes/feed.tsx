@@ -123,12 +123,14 @@ export const Route = createFileRoute("/feed")({
    * A aba vive na URL (`/feed?aba=ALL`): abrir uma publicação e voltar restaura a MESMA aba em que
    * a pessoa estava — antes o retorno caía sempre em "Para você".
    */
-  validateSearch: (search: Record<string, unknown>): { aba?: HomeTab } => {
+  validateSearch: (search: Record<string, unknown>): { aba?: HomeTab; compor?: "ARTICLE" } => {
     const aba: HomeTab | undefined =
       typeof search.aba === "string" && HOME_TABS.includes(search.aba as HomeTab)
         ? (search.aba as HomeTab)
         : undefined;
-    return aba ? { aba } : {};
+    // `compor=ARTICLE` opens the composer in article mode (the profile "Escrever artigo" shortcut).
+    const compor = search.compor === "ARTICLE" ? "ARTICLE" : undefined;
+    return { ...(aba ? { aba } : {}), ...(compor ? { compor } : {}) };
   },
   head: () => ({
     meta: [
@@ -232,7 +234,7 @@ function Home() {
   const authenticated = useIsAuthenticated();
   // A aba vem da URL; trocar de aba REPLACES o histórico (o "voltar" continua voltando para a
   // página anterior, e não passeando pelas abas).
-  const { aba } = Route.useSearch();
+  const { aba, compor } = Route.useSearch();
   const navigate = Route.useNavigate();
   // Interface profissional: o início É o feed corporativo (publicações de trabalho). Na social,
   // o feed corporativo não aparece.
@@ -281,7 +283,14 @@ function Home() {
 
   const [draft, setDraft] = useState("");
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
-  const [postType, setPostType] = useState<PostView["type"]>("INSIGHT");
+  const [postType, setPostType] = useState<PostView["type"]>(() =>
+    compor === "ARTICLE" ? "ARTICLE" : "INSIGHT",
+  );
+  // The article request is one-shot: drop it from the URL so a refresh opens the usual composer.
+  useEffect(() => {
+    if (compor)
+      void navigate({ search: (prev) => ({ ...prev, compor: undefined }), replace: true });
+  }, [compor, navigate]);
   // Assunto do post avulso (opcional): é o que liga o post a "O que quero ver"/"não gosto".
   // Em comunidade o post herda o assunto DELA — lá o compositor é outro.
   const [topic, setTopic] = useState<string>(() => readLastTopic());
