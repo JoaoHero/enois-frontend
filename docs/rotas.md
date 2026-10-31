@@ -27,14 +27,15 @@ Funcionalidades:
 
 - **Compositor de posts** com textarea com @menção, seletor de tipo (INSIGHT, ARTICLE, QUESTION, PROJECT), upload de mídia (imagem/vídeo)
 - **Identidade ativa:** escolhida no menu da conta; com a profissional, o compositor publica no feed corporativo (`BUSINESS`) e os tipos de página/artigo saem da seleção — regras em `componentes.md`
-- **Abas de filtro:** Para você, Tudo, Seguindo, Discussões, Projetos
+- **Abas de filtro:** Para você, Tudo, Seguindo, Discussões, Projetos. "Para você" is the default tab (the one that shows the "você está em dia" marker).
 - **Feed infinito** de `PostCard` components
-- **"Você está em dia":** a primeira página das abas por data (Tudo, Não vistos e as de tipo) traz
-  `lastSeenAt`; as ranqueadas (Para você, Em alta, Interagidos) recebem sempre null e nunca chamam
-  `POST /feed/seen`. O valor é guardado por visita e por aba (um refetch não o move). O `CaughtUpDivider` entra antes do primeiro post com `createdAt` até ele,
-  só quando há marcador e um post mais novo acima. Quando o primeiro post sai pelo topo da tela,
-  `POST /feed/seen` vai uma vez por visita com o `createdAt` mais novo carregado
-  (`src/lib/feed/caught-up.ts`).
+- **"Você está em dia" (only on "Para você"):** the first `FOR_YOU` page carries `lastSeenAt`; every
+  other tab gets null and never calls `POST /feed/seen`. The value is kept for the visit (a refetch does
+  not move it). "Para você" is ordered by relevance, so the loaded posts newer than the marker go first,
+  newest first, then the `CaughtUpDivider`, then the rest in API order (`caughtUpOrder`). The divider
+  shows only with a marker, a new post above and an old post loaded below. The backend pages "Para
+  você" by date window, so the list only grows at the end. When the first post leaves through the top,
+  `POST /feed/seen` goes once per visit with the newest loaded `createdAt` (`src/lib/feed/caught-up.ts`).
 - **Dúvidas:** no "Tudo", o filtro de tipo "Dúvidas" (`type=QUESTION`) mostra o `QuestionStatusFilter` (Todas, Abertas, Resolvidas → `resolved` omitido, `false`, `true`). Com o tipo Pergunta no compositor aparece o `QuestionComposerHint`. Quem perguntou marca a resposta de outra pessoa nos comentários (otimista, desfaz se a API recusar); a resposta aceita sobe para o topo da lista
 - **Sidebar direita:** Mini-perfil, sugestões de conexão, eventos
 
