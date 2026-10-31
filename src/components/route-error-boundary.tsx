@@ -36,7 +36,10 @@ export class RouteErrorBoundary extends Component<
 
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               <button
-                onClick={() => this.setState({ hasError: false })}
+                onClick={() => {
+                  this.props.onReset?.();
+                  this.setState({ hasError: false });
+                }}
                 className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
               >
                 {texts.root.error.retry}

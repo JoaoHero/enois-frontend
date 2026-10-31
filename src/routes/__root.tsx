@@ -258,7 +258,7 @@ function RootInsideProvider() {
   return (
     <ToastProvider>
       <ModuleDisabledGate>
-        <RouteErrorBoundary>
+        <RouteErrorBoundary key={pathname} onReset={() => router.invalidate()}>
           <Outlet />
         </RouteErrorBoundary>
       </ModuleDisabledGate>
