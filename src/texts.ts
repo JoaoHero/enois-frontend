@@ -2238,6 +2238,13 @@ export const texts = {
     deleteConfirm: "Apagar",
     deleted: "Conversas apagadas para você.",
     loadingOlder: "Carregando...",
+    professionalPrompt:
+      "Esta conversa é sobre uma oportunidade profissional. Deseja continuar com seu perfil social ou criar o profissional?",
+    professionalPromptCta: "Criar perfil profissional",
+    professionalPromptSocial: "Continuar com o social",
+    businessDirectError: "Não foi possível abrir a conversa profissional. Tente novamente.",
+    requireProfessionalProfile:
+      "Ative o seu perfil profissional para iniciar uma conversa de trabalho.",
   },
 
   developersChrome: {
